@@ -1,0 +1,55 @@
+const INITIAL_CUSTOMER_CONTEXT = {
+  cookies: "",
+  gameList: [],
+  currentGamePage: 0,
+  searchGameQuery: "",
+  totalGamePages: 0,
+  productList: [],
+  productPage: 0,
+  totalProductPages: 0,
+  trxList: [],
+  trxPage: 0,
+  totalTrxPages: 0,
+  serverList: [],
+  serverPage: 0,
+  totalServerPages: 0,
+  currentMode: "",
+  paymentMethods: [
+    {
+      id: "",
+      providerCd: "",
+      name: "",
+      minAmount: 1,
+      maxAmount: 1000000000,
+      fee: 0,
+      feeType: "",
+      cd: "",
+      category: "",
+    },
+  ],
+  cart: {
+    game: {},
+    paymentMethod: {},
+    userId: "",
+    server: "",
+    product: {},
+    quantity: 1,
+    mobileNumber: "",
+    cashtag: "",
+  },
+};
+
+const INITIAL_ADMIN_CONTEXT = {
+  cookies: "",
+  gameList: [],
+  currentGamePage: 0,
+  searchGameQuery: "",
+  totalGamePages: 0,
+  trxList: [],
+  trxPage: 0,
+  totalTrxPages: 0,
+  currentMode: "",
+  selectedGame: null,
+};
+
+module.exports = { INITIAL_CUSTOMER_CONTEXT, INITIAL_ADMIN_CONTEXT };
