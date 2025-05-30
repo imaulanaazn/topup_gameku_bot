@@ -628,7 +628,6 @@ module.exports = {
       productId: product.id,
       paymentId: paymentMethod.id,
       quantity: 1,
-      promoCode: "",
       mobileNumber: "+6281234567890",
       cashtag: cashtag,
     };
@@ -671,6 +670,21 @@ module.exports = {
       });
 
       if (
+        PaymentAction.CHECKOUT_URL in invoiceData.payment.action &&
+        invoiceData.payment.action.checkoutUrl
+      ) {
+        const qr = invoiceData.payment.action.checkoutUrl;
+        const qrBuffer = await QRCode.toBuffer(qr, {
+          type: "png",
+          width: 300,
+          errorCorrectionLevel: "H",
+        });
+        await ctx.replyWithPhoto(new InputFile(qrBuffer), {
+          caption: "Silakan scan QR di bawah ini untuk membayar via ShopeePay.",
+        });
+      }
+
+      if (
         PaymentAction.QR_STRING in invoiceData.payment.action &&
         invoiceData.payment.action.qrString
       ) {
@@ -696,16 +710,22 @@ module.exports = {
         parse_mode: "HTML",
       };
 
-      options.reply_markup = {
-        inline_keyboard: [
-          [
-            {
-              text: "Refresh 🔁",
-              callback_data: `refreshInvoice:${invoice}`,
-            },
+      if (
+        invoiceData.order.status === OrderStatuses.PENDING_ORDER ||
+        invoiceData.order.status === OrderStatuses.PENDING_PAYMENT ||
+        invoiceData.order.status === OrderStatuses.PROCESSING
+      ) {
+        options.reply_markup = {
+          inline_keyboard: [
+            [
+              {
+                text: "Refresh 🔁",
+                callback_data: `refreshInvoice:${invoice}`,
+              },
+            ],
           ],
-        ],
-      };
+        };
+      }
 
       await ctx.editMessageCaption(options);
     } catch (error) {
