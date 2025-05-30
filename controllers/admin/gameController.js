@@ -24,7 +24,7 @@ module.exports = {
 
   daftarGamesBtn: async (ctx) => {
     try {
-      const gameList = await getAvailGames("");
+      const gameList = await getAllGames("");
       const totalPages = Math.ceil(gameList.length / gamesPerPage);
 
       // Store in session
