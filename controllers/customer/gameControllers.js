@@ -670,21 +670,6 @@ module.exports = {
       });
 
       if (
-        PaymentAction.CHECKOUT_URL in invoiceData.payment.action &&
-        invoiceData.payment.action.checkoutUrl
-      ) {
-        const qr = invoiceData.payment.action.checkoutUrl;
-        const qrBuffer = await QRCode.toBuffer(qr, {
-          type: "png",
-          width: 300,
-          errorCorrectionLevel: "H",
-        });
-        await ctx.replyWithPhoto(new InputFile(qrBuffer), {
-          caption: "Silakan scan QR di bawah ini untuk membayar via ShopeePay.",
-        });
-      }
-
-      if (
         PaymentAction.QR_STRING in invoiceData.payment.action &&
         invoiceData.payment.action.qrString
       ) {
