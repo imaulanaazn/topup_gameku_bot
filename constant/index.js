@@ -34,7 +34,7 @@ const INITIAL_CUSTOMER_CONTEXT = {
     server: "",
     product: {},
     quantity: 1,
-    mobileNumber: "",
+    telegramId: "",
     cashtag: "",
   },
 };

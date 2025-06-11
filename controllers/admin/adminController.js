@@ -1,3 +1,4 @@
+const { InputFile } = require("grammy");
 const dayjs = require("dayjs");
 const {
   loginAdmin,
@@ -8,6 +9,12 @@ const { getAllOrders } = require("../../services/transactionService");
 const { currencyConverter } = require("../../utils/formatter");
 const { getStatusPayment } = require("../../utils/invoice");
 const { createTransactionHistoryRes } = require("../../utils/pagination");
+const {
+  getAnalyticsForDateRange,
+  formatAnalyticsData,
+  generateRevenueReport,
+  createPdfWithTable,
+} = require("../../utils/monthlyReport");
 
 const trxPerPage = 10;
 
@@ -160,45 +167,114 @@ module.exports = {
     );
   },
 
+  // laporanPendapatanBtn: async (ctx) => {
+  //   let startDate = dayjs().startOf("month").toISOString();
+  //   let endDate = dayjs().endOf("month").toISOString();
+
+  //   try {
+  //     let orderAnalytics = await getOrderAnalytics(startDate, endDate, ctx);
+  //     let revenue = await getRevenue(startDate, endDate, ctx);
+  //     let message =
+  //       `<u><b>Laporan Pendapatan Bulan Ini</b></u> \n\n` +
+  //       `Order Pending --> ${orderAnalytics?.data?.statusCount.pending.total} \n` +
+  //       `Order Sukses --> ${orderAnalytics?.data?.statusCount.success.total} \n` +
+  //       `Order Gagal --> ${orderAnalytics?.data?.statusCount.failed.total} \n` +
+  //       `Order Kadaluarsa --> ${orderAnalytics?.data?.statusCount.expired.total} \n` +
+  //       `Pembeli Baru --> ${orderAnalytics?.data?.newBuyersCount} \n` +
+  //       `Pembeli Baru --> ${orderAnalytics?.data?.totalOrders.total} \n` +
+  //       `Total Pendapatan --> ${currencyConverter(
+  //         revenue?.data?.revenue || 0
+  //       )} \n`;
+  //     await ctx.reply(message, { parse_mode: "HTML" });
+
+  //     startDate = dayjs().subtract(1, "month").startOf("month").toISOString();
+  //     endDate = dayjs(startDate).endOf("month").toISOString();
+
+  //     orderAnalytics = await getOrderAnalytics(startDate, endDate, ctx);
+  //     revenue = await getRevenue(startDate, endDate, ctx);
+  //     message =
+  //       `<u><b>Laporan Pendapatan Bulan Sebelumnya</b></u> \n\n` +
+  //       `Order Pending --> ${orderAnalytics?.data?.statusCount.pending.total} \n` +
+  //       `Order Sukses --> ${orderAnalytics?.data?.statusCount.success.total} \n` +
+  //       `Order Gagal --> ${orderAnalytics?.data?.statusCount.failed.total} \n` +
+  //       `Order Kadaluarsa --> ${orderAnalytics?.data?.statusCount.expired.total} \n` +
+  //       `Pembeli Baru --> ${orderAnalytics?.data?.newBuyersCount} \n` +
+  //       `Total Pembelian --> ${orderAnalytics?.data?.totalOrders.total} \n` +
+  //       `Total Pendapatan --> ${currencyConverter(
+  //         revenue?.data?.revenue || 0
+  //       )} \n`;
+  //     await ctx.reply(message, { parse_mode: "HTML" });
+  //   } catch (error) {
+  //     ctx.reply(error.message);
+  //   }
+  // },
   laporanPendapatanBtn: async (ctx) => {
-    let startDate = dayjs().startOf("month").toISOString();
-    let endDate = dayjs().endOf("month").toISOString();
-
     try {
-      let orderAnalytics = await getOrderAnalytics(startDate, endDate, ctx);
-      let revenue = await getRevenue(startDate, endDate, ctx);
-      let message =
-        `<u><b>Laporan Pendapatan Bulan Ini</b></u> \n\n` +
-        `Order Pending --> ${orderAnalytics?.data?.statusCount.pending.total} \n` +
-        `Order Sukses --> ${orderAnalytics?.data?.statusCount.success.total} \n` +
-        `Order Gagal --> ${orderAnalytics?.data?.statusCount.failed.total} \n` +
-        `Order Kadaluarsa --> ${orderAnalytics?.data?.statusCount.expired.total} \n` +
-        `Pembeli Baru --> ${orderAnalytics?.data?.newBuyersCount} \n` +
-        `Pembeli Baru --> ${orderAnalytics?.data?.totalOrders.total} \n` +
-        `Total Pendapatan --> ${currencyConverter(
-          revenue?.data?.revenue || 0
-        )} \n`;
-      await ctx.reply(message, { parse_mode: "HTML" });
+      // 1. Ambil data dari database
+      const currentStart = dayjs().startOf("month").toISOString();
+      const currentEnd = dayjs().endOf("month").toISOString();
+      const prevStart = dayjs()
+        .subtract(1, "month")
+        .startOf("month")
+        .toISOString();
+      const prevEnd = dayjs(prevStart).endOf("month").toISOString();
 
-      startDate = dayjs().subtract(1, "month").startOf("month").toISOString();
-      endDate = dayjs(startDate).endOf("month").toISOString();
+      const [currentData, prevData] = await Promise.all([
+        getAnalyticsForDateRange(currentStart, currentEnd, ctx),
+        getAnalyticsForDateRange(prevStart, prevEnd, ctx),
+      ]);
 
-      orderAnalytics = await getOrderAnalytics(startDate, endDate, ctx);
-      revenue = await getRevenue(startDate, endDate, ctx);
-      message =
-        `<u><b>Laporan Pendapatan Bulan Sebelumnya</b></u> \n\n` +
-        `Order Pending --> ${orderAnalytics?.data?.statusCount.pending.total} \n` +
-        `Order Sukses --> ${orderAnalytics?.data?.statusCount.success.total} \n` +
-        `Order Gagal --> ${orderAnalytics?.data?.statusCount.failed.total} \n` +
-        `Order Kadaluarsa --> ${orderAnalytics?.data?.statusCount.expired.total} \n` +
-        `Pembeli Baru --> ${orderAnalytics?.data?.newBuyersCount} \n` +
-        `Total Pembelian --> ${orderAnalytics?.data?.totalOrders.total} \n` +
-        `Total Pendapatan --> ${currencyConverter(
-          revenue?.data?.revenue || 0
-        )} \n`;
-      await ctx.reply(message, { parse_mode: "HTML" });
+      // 2. Format data untuk tabel
+      const tableData = [
+        {
+          category: "Order Pending",
+          current:
+            currentData.orderAnalytics?.data?.statusCount.pending.total || 0,
+          previous:
+            prevData.orderAnalytics?.data?.statusCount.pending.total || 0,
+        },
+        {
+          category: "Order Sukses",
+          current:
+            currentData.orderAnalytics?.data?.statusCount.success.total || 0,
+          previous:
+            prevData.orderAnalytics?.data?.statusCount.success.total || 0,
+        },
+        {
+          category: "Order Gagal",
+          current:
+            currentData.orderAnalytics?.data?.statusCount.failed.total || 0,
+          previous:
+            prevData.orderAnalytics?.data?.statusCount.failed.total || 0,
+        },
+        {
+          category: "Pembeli Baru",
+          current: currentData.orderAnalytics?.data?.newBuyersCount || 0,
+          previous: prevData.orderAnalytics?.data?.newBuyersCount || 0,
+        },
+        {
+          category: "Total Pembelian",
+          current: currentData.orderAnalytics?.data?.totalOrders.total || 0,
+          previous: prevData.orderAnalytics?.data?.totalOrders.total || 0,
+        },
+        {
+          category: "Total Pendapatan",
+          current: currentData.revenue?.data?.revenue || 0,
+          previous: prevData.revenue?.data?.revenue || 0,
+        },
+      ];
+
+      // 3. Generate PDF dengan tabel
+      const pdfBytes = await createPdfWithTable(tableData);
+      const fileName = `Laporan_Pendapatan_${dayjs().format("YYYYMMDD")}.pdf`;
+
+      // 4. Kirim ke pengguna
+      await ctx.replyWithDocument(new InputFile(pdfBytes, fileName), {
+        caption: "Berikut laporan pendapatan bulanan",
+      });
     } catch (error) {
-      ctx.reply(error.message);
+      console.error("Error:", error);
+      await ctx.reply("Terjadi kesalahan saat membuat laporan");
     }
   },
 };

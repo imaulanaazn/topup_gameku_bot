@@ -24,22 +24,22 @@ module.exports = {
 
   daftarGamesBtn: async (ctx) => {
     try {
-      const gameList = await getAllGames("");
-      const totalPages = Math.ceil(gameList.length / gamesPerPage);
+      const gameList = await getAllGames(ctx, (query = ""));
+      const totalPages = Math.ceil(gameList.data.length / gamesPerPage);
 
       // Store in session
       ctx.session = {
         ...ctx.session,
-        gameList,
         currentGamePage: 0,
         totalGamePages: totalPages,
       };
+      ctx.session.gameList = gameList.data;
 
       // Send first page
       const options = {
         reply_markup: {
           inline_keyboard: createGamesInlineKeyboard(
-            gameList,
+            gameList.data,
             0,
             gamesPerPage,
             totalPages

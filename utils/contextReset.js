@@ -9,7 +9,7 @@ module.exports = {
       server: "",
       product: {},
       quantity: 1,
-      mobileNumber: "",
+      telegramId: "",
       cashtag: "",
     };
   },

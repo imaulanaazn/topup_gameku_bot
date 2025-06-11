@@ -76,6 +76,7 @@ async function orderHistory(ctx, telegramId) {
     );
 
     const response = await req.json();
+    console.log(response);
     if (response.errorCode) {
       throw new Error(response.message || "Gagal mendapatkan order history");
     }

@@ -622,13 +622,15 @@ module.exports = {
     const { product, userId, server, paymentMethod, cashtag } =
       ctx.session.cart;
 
+    const telegramId = ctx.from.id || "";
+
     const dataCheckout = {
       userId: userId,
       serverId: typeof server !== "string" ? server.id : server,
       productId: product.id,
       paymentId: paymentMethod.id,
       quantity: 1,
-      mobileNumber: "+6281234567890",
+      telegramId: telegramId.toString(),
       cashtag: cashtag,
     };
 
@@ -794,15 +796,8 @@ const createServersInlineKeyboard = (
 };
 
 const isOrderValid = (ctx) => {
-  const {
-    game,
-    paymentMethod,
-    userId,
-    server,
-    product,
-    mobileNumber,
-    cashtag,
-  } = ctx.session.cart;
+  const { game, paymentMethod, userId, server, product, cashtag } =
+    ctx.session.cart;
   let isValid = true;
   let errMessage = "";
 
