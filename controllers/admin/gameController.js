@@ -129,7 +129,6 @@ module.exports = {
 
   searchGamesPaginationCb: async (ctx) => {
     const data = ctx.callbackQuery.data;
-    console.log(ctx.session.gameList);
     if (!ctx.session.gameList.length) return;
 
     if (data.match(/^nextGameList:(.+)$/)) {
