@@ -15,6 +15,7 @@ const { detailInvoiceCapt } = require("../../utils/invoice");
 const { checkIsAdmin } = require("../../services/adminService");
 const { createGamesInlineKeyboard } = require("../../utils/pagination");
 const { resetCartCtx } = require("../../utils/contextReset");
+const { INITIAL_CUSTOMER_CONTEXT } = require("../../constant");
 
 const gamesPerPage = 16;
 const productsPerPage = 24;
@@ -160,6 +161,9 @@ module.exports = {
 
   gameDetailsCb: async (ctx) => {
     const gameSlug = ctx.callbackQuery.data.split(":")[1];
+
+    resetCartCtx(ctx);
+
     try {
       const gameDetails = await getGameDetails(gameSlug);
       ctx.session.cart.game = gameDetails;
